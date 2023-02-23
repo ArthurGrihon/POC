@@ -52,13 +52,6 @@ class TreeWindow(QtWidgets.QMainWindow):
         show_form_action.setShortcut('F2')
         show_form_action.triggered.connect(self.toggle_form)
         view_menu.addAction(show_form_action)
-
-        # Open => Open file
-        openFile = QtWidgets.QAction("Open file", self)
-        openFile.setShortcut('Ctrl+O')
-        openFile.setStatusTip('Open FreeCAD Model')
-        openFile.triggered.connect(self.showPart)
-        file_menu.addAction(openFile)
         
         # Save
         save = QtWidgets.QAction("Save", self)
@@ -68,15 +61,6 @@ class TreeWindow(QtWidgets.QMainWindow):
         save_as = QtWidgets.QAction("Save as", self)
         file_menu.addAction(save_as)
 
-        # liste pour afficher les parties sélectionnées
-        self.partList = QtWidgets.QListWidget(self)
-        self.partList.itemClicked.connect(self.displayPart)
-
-        # widget texte pour afficher les info sur la partie sélectionnée
-        self.infoBox = QtWidgets.QTextEdit(self)
-        self.infoBox.setReadOnly(True)
-
-
         self.tree = QtWidgets.QTreeWidget()
         self.tree.setHeaderLabels(["Instructions"])
         self.root = QtWidgets.QTreeWidgetItem(self.tree, ["Instruction 1"])
@@ -84,6 +68,8 @@ class TreeWindow(QtWidgets.QMainWindow):
         self.tree.customContextMenuRequested.connect(self.context_menu)
         self.tree.itemClicked.connect(self.open_form)
         
+        # self.saveButton = QtWidgets.QPushButton('Save')
+        # self.saveButton.clicked.connect(self.save_to_json)
 
         self.button_gp = QtWidgets.QPushButton("Generate procedure ",self)
         self.button_gp.clicked.connect(self.generate_procedure)
@@ -91,10 +77,7 @@ class TreeWindow(QtWidgets.QMainWindow):
         # Add the widget to the layout        
         self.tree_layout = QtWidgets.QGridLayout()
         self.tree_layout.addWidget(self.tree)
-        self.tree_layout.addWidget(self.button_gp)
-        self.tree_layout.addWidget(self.partList)
-        self.tree_layout.addWidget(self.infoBox)
-        
+        self.tree_layout.addWidget(self.button_gp)        
 
         self.tree_widget = QtWidgets.QWidget()
         self.tree_widget.setLayout(self.tree_layout)
@@ -112,7 +95,7 @@ class TreeWindow(QtWidgets.QMainWindow):
         form.setWindowTitle("Form for " + selected_text)
 
         self.entity_combo = QtWidgets.QComboBox()
-        self.entity_combo.addItems(["Nut", "Entité 2", "Entité 3"])
+        self.entity_combo.addItems(["Nut", "Entité 2", "Entité 3","*3D entity selector*"])
 
         self.action_combo = QtWidgets.QComboBox()
         self.action_combo.addItems(["Torque", "Action 2", "Action 3"])
@@ -196,25 +179,28 @@ class TreeWindow(QtWidgets.QMainWindow):
             if ok:
                 new_item = QtWidgets.QTreeWidgetItem(self.tree, [name])
 
-    def showPart(self):
-        # ouvre un fichier FreeCAD
-        filename = QtWidgets.QFileDialog.getOpenFileName(self)
-        FreeCAD.open(filename[0])
-        # récupère les parties du modèle et les ajouter à une liste
-        parts = FreeCAD.ActiveDocument.Objects
-        self.partList.clear()
-        for part in parts:
-            item = QtWidgets.QListWidgetItem(part.Name)
-            self.partList.addItem(item)
+    # def save_to_json(self):
+    #     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save file", "", "JSON Files (*.json)")
+    #     if file_path:
+    #         data = {}
+    #         root_item = self.treeModel.invisibleRootItem()
+    #         for i in range(root_item.rowCount()):
+    #             key_item = root_item.child(i, 0)
+    #             value_item = root_item.child(i, 1)
+    #             key = key_item.text()
+    #             value = value_item.text()
+    #             data[key] = value
 
-    def displayPart(self, item):
-        # récupère les info sur la partie sélectionnée
-        selectedPart = FreeCAD.ActiveDocument.getObject(item.text())
-        info = 'Name: ' + selectedPart.Name + '\n'
-        info += 'Shape Type: ' + selectedPart.Shape.ShapeType + '\n'
-        info += 'Volume: ' + str(selectedPart.Shape.Volume) + '\n'
-        # affiche les info
-        self.infoBox.setText(info)
+    #         form_data = {}
+    #         for i in range(self.formLayout.rowCount()):
+    #             key_widget = self.formLayout.itemAt(i, QtWidgets.QFormLayout.LabelRole).widget()
+    #             value_widget = self.formLayout.itemAt(i, QtWidgets.QFormLayout.FieldRole).widget()
+    #             key = key_widget.text()
+    #             value = value_widget.text()
+    #             form_data[key] = value
+
+    #         with open(file_path, 'w') as f:
+    #             json.dump({"tree": data, "form": form_data}, f)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

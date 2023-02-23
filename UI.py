@@ -12,6 +12,7 @@ class TreeWindow(QtWidgets.QMainWindow):
 
         self.hideList = []
 
+        self.entity_form = {}
         # Window style
         self.originalPalette = QtWidgets.QApplication.palette()
 
@@ -136,85 +137,145 @@ class TreeWindow(QtWidgets.QMainWindow):
         # Define window style (window or fusion)
         QtWidgets.QApplication.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
 
+# WIP Tree Save :
+
+    # def closeEvent(self, event):
+    #     self.save_tree_state()
+
+    # def save_tree_state(self):
+    #     state = self.treeToJson(self.tree)
+    #     with open(self.tree_file_path, 'w') as file:
+    #         json.dump(state, file)
+
+    # def load_tree_state(self):
+    #     try:
+    #         with open(self.tree_file_path, 'r') as file:
+    #             state = json.load(file)
+    #             self.jsonToTree(state, self.tree)
+    #     except FileNotFoundError:
+    #         pass
+
+    # def treeToJson(self, tree):
+    #     state = {}
+    #     for index in range(tree.topLevelItemCount()):
+    #         item = tree.topLevelItem(index)
+    #         state[item.text(0)] = self.itemToJson(item)
+    #     return state
+
+    # def itemToJson(self, item):
+    #     state = {'text': item.text(0)}
+    #     for index in range(item.childCount()):
+    #         child = item.child(index)
+    #         state.setdefault('children', []).append(self.itemToJson(child))
+    #     return state
+
+    # def jsonToTree(self, state, tree):
+    #     for key, value in state.items():
+    #         item = QtWidgets.QTreeWidgetItem([value['text']])
+    #         tree.addTopLevelItem(item)
+    #         if 'children' in value:
+    #             self.jsonToItem(value['children'], item)
+
+    # def jsonToItem(self, state, parent):
+    #     for value in state:
+    #         item = QtWidgets.QTreeWidgetItem([value['text']])
+    #         parent.addChild(item)
+    #         if 'children' in value:
+    #             self.jsonToItem(value['children'], item)
+#
+
     def generate_procedure(self):
         QtWidgets.QMessageBox.about(self, "Title", "Procedure succesfuly generated")
 
     def open_form(self, item):
+
         # Get the selected item's text
         self.selected_text = item.text(0)
+        print(self.entity_form)
 
-        # Form widget to display
-        form = QtWidgets.QWidget()
-
-        # Separation line
-        line = QtWidgets.QFrame()
-        line.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
+        # Check if form widget for selected entity already exists   
+        if self.selected_text in self.entity_form:
+            # form already exists, just show it
+            self.form_dock.setWidget(self.entity_form[self.selected_text])
         
-        # Form title
-        self.label1 = QtWidgets.QLabel("Form for " + self.selected_text)
+        else:
 
-        # Entity combo box
-        self.entity_combo = QtWidgets.QComboBox()
-        self.entity_combo.addItem("Select an entity...")
-        self.entity_combo.addItems(["Bolt (11)", "Washer (12)", "Fuselage attachement bracket (15)"])
-        self.entity_combo.activated.connect(self.enable_action_combo)
+            # Form widget to display
+            form = QtWidgets.QWidget()
 
-        # Get entity button
-        self.get_selection_button = QtWidgets.QPushButton("Get 3D entity selection")
-        self.get_selection_button.clicked.connect(self.get_selection)
+            # Separation line
+            line = QtWidgets.QFrame()
+            line.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Sunken)
 
-        # Entity line
-        self.hentity  = QtWidgets.QHBoxLayout()
-        self.hentity.addWidget(self.entity_combo)
-        self.hentity.addWidget(self.get_selection_button)
-        self.hentity.addStretch()
+            # Form title
+            self.label1 = QtWidgets.QLabel("Form for " + self.selected_text)
 
-        # Action combo box
-        self.action_combo = QtWidgets.QComboBox()
-        self.action_combo.addItems(["Torque", "Remove", "Disconnect"])
-        self.action_combo.setEnabled(False)
-        self.action_combo.activated.connect(self.enable_button_preview)
-        self.action_combo.adjustSize()
+            # Entity combo box
+            self.entity_combo = QtWidgets.QComboBox()
+            self.entity_combo.addItem("Select an entity...")
+            self.entity_combo.addItems(["Bolt (11)", "Washer (12)", "Fuselage attachement bracket (15)"])
+            self.entity_combo.activated.connect(self.enable_action_combo)
 
-        # Action line
-        self.haction = QtWidgets.QHBoxLayout()
-        self.haction.addWidget(self.action_combo)
-        self.haction.addStretch()
+            # Get entity button
+            self.get_selection_button = QtWidgets.QPushButton("Get 3D entity selection")
+            self.get_selection_button.clicked.connect(self.get_selection)
 
-        # Preview part
-        self.label2 = QtWidgets.QLabel("Preview for: " + self.selected_text)
-        self.button_preview = QtWidgets.QPushButton("Preview for: ", self)
-        self.button_preview.setEnabled(False)
-        self.button_preview.pressed.connect(self.find)
-        hbox2 = QtWidgets.QHBoxLayout()
-        hbox2.addWidget(self.button_preview)
-        hbox2.addStretch()
-        self.preview = QtWidgets.QTextEdit()
+            # Entity line
+            self.hentity  = QtWidgets.QHBoxLayout()
+            self.hentity.addWidget(self.entity_combo)
+            self.hentity.addWidget(self.get_selection_button)
+            self.hentity.addStretch()
 
-        # Save part
-        self.button_save = QtWidgets.QPushButton("Save")
-        self.button_cancel = QtWidgets.QPushButton("Cancel")
-        hbox3 = QtWidgets.QHBoxLayout()
-        hbox3.addWidget(self.button_save)
-        hbox3.addWidget(self.button_cancel)
-        hbox3.addStretch()
-        
-        # Form layout
-        form_layout = QtWidgets.QFormLayout()
-        form_layout.addWidget(self.label1)
-        form_layout.addRow("Entity", self.hentity)
-        form_layout.addRow("Action", self.haction)
-        form_layout.addRow(line)
-        form_layout.addWidget(self.label2)        
-        form_layout.addRow("Preview", hbox2)
-        form_layout.addRow(self.preview)
-        form_layout.addRow(hbox3)
+            # Action combo box
+            self.action_combo = QtWidgets.QComboBox()
+            self.action_combo.addItems(["Torque", "Remove", "Disconnect"])
+            self.action_combo.setEnabled(False)
+            self.action_combo.activated.connect(self.enable_button_preview)
+            self.action_combo.adjustSize()
 
-        form.setLayout(form_layout)
-    
-        # Set the form widget as the central widget for the form dock
-        self.form_dock.setWidget(form)
-    
+            # Action line
+            self.haction = QtWidgets.QHBoxLayout()
+            self.haction.addWidget(self.action_combo)
+            self.haction.addStretch()
+
+            # Preview part
+            self.label2 = QtWidgets.QLabel("Preview for: " + self.selected_text)
+            self.button_preview = QtWidgets.QPushButton("Preview for: ", self)
+            self.button_preview.setEnabled(False)
+            self.button_preview.pressed.connect(self.find)
+            hbox2 = QtWidgets.QHBoxLayout()
+            hbox2.addWidget(self.button_preview)
+            hbox2.addStretch()
+            self.preview = QtWidgets.QTextEdit()
+
+            # Form layout
+            form_layout = QtWidgets.QFormLayout()
+            form_layout.addWidget(self.label1)
+            form_layout.addRow("Entity", self.hentity)
+            form_layout.addRow("Action", self.haction)
+            form_layout.addRow(line)
+            form_layout.addWidget(self.label2)
+            form_layout.addRow(self.preview)
+
+            form.setLayout(form_layout)
+
+#WIP Save form
+            # Save form data to JSON file
+            form_data = {
+                "entity": self.selected_text,
+                "entity_combo_index": self.entity_combo.currentIndex(),
+                "action_combo_index": self.action_combo.currentIndex(),
+                "preview_text": self.preview.toPlainText()
+            }
+            with open("form_data.json", "a") as f:
+                json.dump(form_data, f)
+
+            # Add the form widget to the dictionary
+            self.entity_form[self.selected_text] = form
+
+            # Set the form widget as the central widget for the form dock
+            self.form_dock.setWidget(form)
+            
     def enable_action_combo(self):
         if self.entity_combo.currentText() == "Select an entity...":
             self.action_combo.setEnabled(False)
@@ -342,6 +403,29 @@ class TreeWindow(QtWidgets.QMainWindow):
         # Afficher les info
         self.infoBox.setText(info)
 
+    # def save_to_json(self):
+    #     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save file", "", "JSON Files (*.json)")
+    #     if file_path:
+    #         data = {}
+    #         root_item = self.treeModel.invisibleRootItem()
+    #         for i in range(root_item.rowCount()):
+    #             key_item = root_item.child(i, 0)
+    #             value_item = root_item.child(i, 1)
+    #             key = key_item.text()
+    #             value = value_item.text()
+    #             data[key] = value
+
+    #         form_data = {}
+    #         for i in range(self.formLayout.rowCount()):
+    #             key_widget = self.formLayout.itemAt(i, QtWidgets.QFormLayout.LabelRole).widget()
+    #             value_widget = self.formLayout.itemAt(i, QtWidgets.QFormLayout.FieldRole).widget()
+    #             key = key_widget.text()
+    #             value = value_widget.text()
+    #             form_data[key] = value
+
+    #         with open(file_path, 'w') as f:
+    #             json.dump({"tree": data, "form": form_data}, f)
+    
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     main_window = TreeWindow()
