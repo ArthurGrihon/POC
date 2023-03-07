@@ -1,4 +1,4 @@
-FREECADPATH = 'C:\Program Files\FreeCAD 0.20\\bin'
+FREECADPATH = r'C:\Users\agrihon\AppData\Local\Programs\FreeCAD 0.20\bin'
 import sys
 import json
 sys.path.append(FREECADPATH)
@@ -52,11 +52,19 @@ class TreeWindow(QtWidgets.QMainWindow):
         for tw in toolWidgets:
             tw.hide()
 
+        # create procedure dock
+        self.Fullpreview = QtWidgets.QTextEdit()
+        self.Fullpreview.setReadOnly(True)
+        self.Fullpreview_dock = QtWidgets.QDockWidget('Procedure')
+        self.Fullpreview_dock.setWidget(self.Fullpreview)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.Fullpreview_dock)
+        
         # Desactivate panels in FreeCAD (autre méthode)
         # self.report_view = freecadDMU.findChild(QtWidgets.QDockWidget, "Python console")
         # if self.report_view is not None:
         #     self.report_view.setVisible(False)
 
+        # create dmu dock
         self.dmu_dock = QtWidgets.QDockWidget("DMU")
         self.dmu_dock.setWidget(freecadDMU)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dmu_dock)
@@ -146,7 +154,7 @@ class TreeWindow(QtWidgets.QMainWindow):
     #     state = self.treeToJson(self.tree)
     #     with open(self.tree_file_path, 'w') as file:
     #         json.dump(state, file)
-
+    
     # def load_tree_state(self):
     #     try:
     #         with open(self.tree_file_path, 'r') as file:
@@ -197,7 +205,7 @@ class TreeWindow(QtWidgets.QMainWindow):
         if self.selected_text in self.entity_form:
             # form already exists, just show it
             self.form_dock.setWidget(self.entity_form[self.selected_text])
-        
+            self.action_combo.currentIndexChanged.connect(self.save_data)
         else:
 
             # Form widget to display
@@ -215,6 +223,7 @@ class TreeWindow(QtWidgets.QMainWindow):
             self.entity_combo.addItem("Select an entity...")
             self.entity_combo.addItems(["Bolt (11)", "Washer (12)", "Fuselage attachement bracket (15)"])
             self.entity_combo.activated.connect(self.enable_action_combo)
+
 
             # Get entity button
             self.get_selection_button = QtWidgets.QPushButton("Get 3D entity selection")
@@ -242,11 +251,12 @@ class TreeWindow(QtWidgets.QMainWindow):
             self.label2 = QtWidgets.QLabel("Preview for: " + self.selected_text)
             self.button_preview = QtWidgets.QPushButton("Preview for: ", self)
             self.button_preview.setEnabled(False)
-            self.button_preview.pressed.connect(self.find)
+            self.action_combo.currentIndexChanged.connect(self.find)
             hbox2 = QtWidgets.QHBoxLayout()
             hbox2.addWidget(self.button_preview)
             hbox2.addStretch()
             self.preview = QtWidgets.QTextEdit()
+            self.preview.setReadOnly(True)
 
             # Form layout
             form_layout = QtWidgets.QFormLayout()
@@ -258,24 +268,24 @@ class TreeWindow(QtWidgets.QMainWindow):
             form_layout.addRow(self.preview)
 
             form.setLayout(form_layout)
-
-#WIP Save form
-            # Save form data to JSON file
-            form_data = {
-                "entity": self.selected_text,
-                "entity_combo_index": self.entity_combo.currentIndex(),
-                "action_combo_index": self.action_combo.currentIndex(),
-                "preview_text": self.preview.toPlainText()
-            }
-            with open("form_data.json", "a") as f:
-                json.dump(form_data, f)
-
+            
             # Add the form widget to the dictionary
             self.entity_form[self.selected_text] = form
 
             # Set the form widget as the central widget for the form dock
             self.form_dock.setWidget(form)
-            
+
+            self.action_combo.currentIndexChanged.connect(self.save_data)
+
+    def save_data(self):
+        data = {
+            'Title' : self.label1.text(),
+            'Entity': self.entity_combo.currentText(),
+            'Action': self.action_combo.currentText(),
+        }
+        with open(self.label1.text()+'.json', 'w') as f:
+            json.dump(data, f, indent=4)
+
     def enable_action_combo(self):
         if self.entity_combo.currentText() == "Select an entity...":
             self.action_combo.setEnabled(False)
